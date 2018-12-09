@@ -1021,6 +1021,18 @@ class InstaBot:
                 self.hdrl.setFormatter(formatter)
                 self.logger.setLevel(level=logging.INFO)
                 self.logger.addHandler(self.hdrl)
+        elif self.log_mod == 2:
+            #Log to Service Log File
+            if self.log_file == 0:
+                #Setup Handle
+                self.log_file = 1
+                formatter = logging.Formatter('%(name)s '
+                                              '- %(message)s')
+                self.logger = logging.getLogger(self.user_login)
+                self.hdrl = logging.StreamHandler()
+                self.hdrl.setFormatter(formatter)
+                self.logger.setLevel(level=logging.INFO)
+                self.logger.addHandler(self.hdrl)
             # Log to log file.
             try:
                 self.logger.info(log_text)
