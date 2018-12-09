@@ -23,6 +23,7 @@ from .sql_updates import get_username_random, get_username_to_unfollow_random
 from .sql_updates import check_and_insert_user_agent
 from fake_useragent import UserAgent
 import re
+import os
 
 class InstaBot:
     """
@@ -122,6 +123,9 @@ class InstaBot:
 
     # For new_auto_mod
     next_iteration = {"Like": 0, "Follow": 0, "Unfollow": 0, "Comments": 0}
+
+    #Killswitch
+    prog_run = True
 
     def __init__(self,
                  login,
@@ -235,6 +239,7 @@ class InstaBot:
         self.write_log(log_string)
         self.login()
         self.populate_user_blacklist()
+        signal.signal(signal.SIGINT, self.cleanup)
         signal.signal(signal.SIGTERM, self.cleanup)
         atexit.register(self.cleanup)
 
@@ -353,6 +358,7 @@ class InstaBot:
         # Logout
         if self.login_status:
             self.logout()
+        self.prog_run = False
 
     def get_media_id_by_tag(self, tag):
         """ Get media ID set, by your hashtag or location """
@@ -704,14 +710,16 @@ class InstaBot:
     def auto_mod(self):
         """ Star loop, that get media ID by your tag list, and like it """
         if self.login_status:
-            while True:
+            while self.prog_run:
                 random.shuffle(self.tag_list)
                 self.get_media_id_by_tag(random.choice(self.tag_list))
                 self.like_all_exist_media(random.randint \
                                               (1, self.max_like_for_one_tag))
+            self.write_log("Exit Program... GoodBye")
+            sys.exit(0)
 
     def new_auto_mod(self):
-        while True:
+        while self.prog_run:
             now = datetime.datetime.now()
             if (
                     datetime.time(self.start_at_h, self.start_at_m) <= now.time()
@@ -739,6 +747,8 @@ class InstaBot:
                 print("sleeping until {hour}:{min}".format(hour=self.start_at_h,
                                                            min=self.start_at_m), end="\r")
                 time.sleep(100)
+        self.write_log("Exit Program... GoodBye")
+        sys.exit(0)
 
     def remove_already_liked(self):
         self.write_log("Removing already liked medias..")
